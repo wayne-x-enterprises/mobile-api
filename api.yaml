@@ -1,39 +1,96 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
+  title: Call Monitoring and Signature Management API
+  description: API for managing call logs, supervisor monitoring, and digital signatures
   license:
     name: MIT
 servers:
-  - url: http://petstore.swagger.io/v1
+  - url: http://api.callmonitoring.io/v1
 paths:
-  /pets:
+  /call-logs:
     get:
-      summary: List all pets
-      operationId: listPets
+      summary: Get call logs with filtering and pagination
+      operationId: getCallLogs
       tags:
-        - pets
+        - call-logs
       parameters:
-        - name: limit
+        - name: supervisorId
           in: query
-          description: How many items to return at one time (max 100)
+          description: Filter by supervisor ID
+          required: false
+          schema:
+            type: string
+        - name: agentId
+          in: query
+          description: Filter by agent ID
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by call status
+          required: false
+          schema:
+            type: string
+            enum: [live, ended, on-hold, transferred]
+        - name: department
+          in: query
+          description: Filter by department
+          required: false
+          schema:
+            type: string
+        - name: priority
+          in: query
+          description: Filter by priority level
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, urgent]
+        - name: isMonitored
+          in: query
+          description: Filter by monitoring status
+          required: false
+          schema:
+            type: boolean
+        - name: startDate
+          in: query
+          description: Filter calls from this date (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter calls until this date (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          description: Page number for pagination (1-based)
           required: false
           schema:
             type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Number of items per page (max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
             maximum: 100
-            format: int32
+            default: 20
       responses:
         '200':
-          description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
+          description: Paginated list of call logs
           content:
-            application/json:    
+            application/json:
               schema:
-                $ref: "#/components/schemas/Pets"
+                $ref: "#/components/schemas/CallLogSearchResult"
         default:
           description: unexpected error
           content:
@@ -41,51 +98,148 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     post:
-      summary: Create a pet
-      operationId: createPets
+      summary: Create a new call log entry
+      operationId: createCallLog
       tags:
-        - pets
+        - call-logs
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pet'
+              $ref: '#/components/schemas/CreateCallLogRequest'
         required: true
       responses:
         '201':
-          description: Null response
+          description: Call log created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CallLog"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /pets/{petId}:
+  /call-logs/{callId}:
     get:
-      summary: Info for a specific pet
-      operationId: showPetById
+      summary: Get details for a specific call log
+      operationId: getCallLogById
       tags:
-        - pets
+        - call-logs
       parameters:
-        - name: petId
+        - name: callId
           in: path
           required: true
-          description: The id of the pet to retrieve
-          schema:
-            type: string
-        - name: petAlias
-          in: path
-          required: false
-          description: The alias of the pet to retrieve
+          description: The ID of the call log to retrieve
           schema:
             type: string
       responses:
         '200':
-          description: Expected response to a valid request
+          description: Call log details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
+                $ref: "#/components/schemas/CallLog"
+        '404':
+          description: Call log not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update a call log (notes, tags, status)
+      operationId: updateCallLog
+      tags:
+        - call-logs
+      parameters:
+        - name: callId
+          in: path
+          required: true
+          description: The ID of the call log to update
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCallLogRequest'
+        required: true
+      responses:
+        '200':
+          description: Call log updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CallLog"
+        '404':
+          description: Call log not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /call-logs/supervisor/{supervisorId}/live:
+    get:
+      summary: One-click access to live calls monitored by supervisor
+      operationId: getSupervisorLiveCalls
+      tags:
+        - call-logs
+        - supervisor
+      parameters:
+        - name: supervisorId
+          in: path
+          required: true
+          description: The ID of the supervisor
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of live calls being monitored
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CallLog"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /call-logs/supervisor/{supervisorId}/stats:
+    get:
+      summary: Get call statistics for a supervisor
+      operationId: getSupervisorStats
+      tags:
+        - call-logs
+        - supervisor
+      parameters:
+        - name: supervisorId
+          in: path
+          required: true
+          description: The ID of the supervisor
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Supervisor call statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupervisorStats"
         default:
           description: unexpected error
           content:
@@ -94,24 +248,250 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
-    Pet:
+    CallLog:
       type: object
       required:
         - id
-        - name
+        - supervisorId
+        - agentId
+        - customer
+        - startTime
+        - status
+        - isMonitored
+        - quality
+        - tags
+        - metadata
       properties:
         id:
+          type: string
+          description: Unique identifier for the call
+        supervisorId:
+          type: string
+          description: ID of the supervisor who monitored the call
+        agentId:
+          type: string
+          description: ID of the agent on the call
+        customer:
+          $ref: "#/components/schemas/Customer"
+        startTime:
+          type: string
+          format: date-time
+          description: Call start timestamp
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Call end timestamp (null if call is still active)
+        duration:
           type: integer
-          format: int64
+          description: Duration of the call in seconds
+        status:
+          type: string
+          enum: [live, ended, on-hold, transferred]
+          description: Current status of the call
+        isMonitored:
+          type: boolean
+          description: Whether the call was monitored by a supervisor
+        quality:
+          $ref: "#/components/schemas/CallQuality"
+        recording:
+          $ref: "#/components/schemas/CallRecording"
+        notes:
+          type: string
+          description: Call notes added by supervisor
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for categorizing the call
+        metadata:
+          $ref: "#/components/schemas/CallMetadata"
+    
+    Customer:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        id:
+          type: string
+          description: Customer ID
         name:
           type: string
-        tag:
+          description: Customer name
+        phoneNumber:
           type: string
-    Pets:
-      type: array
-      maxItems: 100
-      items:
-        $ref: "#/components/schemas/Pet"
+          description: Customer phone number
+    
+    CallQuality:
+      type: object
+      required:
+        - audioQuality
+        - connectionStability
+      properties:
+        audioQuality:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Audio quality score (1-5)
+        connectionStability:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Connection stability score (1-5)
+    
+    CallRecording:
+      type: object
+      required:
+        - isRecorded
+      properties:
+        isRecorded:
+          type: boolean
+          description: Whether the call was recorded
+        recordingUrl:
+          type: string
+          description: URL to the recording file
+        fileSize:
+          type: integer
+          description: Recording file size in bytes
+    
+    CallMetadata:
+      type: object
+      required:
+        - direction
+        - department
+        - priority
+      properties:
+        direction:
+          type: string
+          enum: [inbound, outbound]
+          description: Call direction
+        department:
+          type: string
+          description: Department or team handling the call
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          description: Call priority level
+        outcome:
+          type: string
+          enum: [resolved, escalated, callback-required, no-resolution]
+          description: Call outcome or resolution
+    
+    CallLogSearchResult:
+      type: object
+      required:
+        - logs
+        - totalCount
+        - page
+        - pageSize
+        - hasMore
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CallLog"
+        totalCount:
+          type: integer
+          description: Total number of call logs matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+        hasMore:
+          type: boolean
+          description: Whether there are more pages available
+    
+    CreateCallLogRequest:
+      type: object
+      required:
+        - supervisorId
+        - agentId
+        - customer
+        - startTime
+        - status
+        - isMonitored
+        - quality
+        - metadata
+      properties:
+        supervisorId:
+          type: string
+        agentId:
+          type: string
+        customer:
+          $ref: "#/components/schemas/Customer"
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [live, ended, on-hold, transferred]
+        isMonitored:
+          type: boolean
+        quality:
+          $ref: "#/components/schemas/CallQuality"
+        recording:
+          $ref: "#/components/schemas/CallRecording"
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        metadata:
+          $ref: "#/components/schemas/CallMetadata"
+    
+    UpdateCallLogRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+          description: Updated notes for the call
+        tags:
+          type: array
+          items:
+            type: string
+          description: Updated tags for the call
+        status:
+          type: string
+          enum: [live, ended, on-hold, transferred]
+          description: Updated call status
+        endTime:
+          type: string
+          format: date-time
+          description: Call end time (when ending a call)
+        outcome:
+          type: string
+          enum: [resolved, escalated, callback-required, no-resolution]
+          description: Call outcome when ending a call
+    
+    SupervisorStats:
+      type: object
+      required:
+        - liveCalls
+        - totalMonitored
+        - averageDuration
+        - callsToday
+      properties:
+        liveCalls:
+          type: integer
+          description: Number of currently live calls being monitored
+        totalMonitored:
+          type: integer
+          description: Total number of calls monitored by the supervisor
+        averageDuration:
+          type: integer
+          description: Average call duration in seconds
+        callsToday:
+          type: integer
+          description: Number of calls monitored today
+    
     Error:
       type: object
       required:

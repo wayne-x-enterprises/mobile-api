@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Click Logs - Call Monitoring Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .demo-header {
+            margin-bottom: 30px;
+        }
+        
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1F2937;
+            margin-bottom: 10px;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.2rem;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+        
+        .feature-highlight {
+            background: #EBF8FF;
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1E40AF;
+            margin-bottom: 10px;
+        }
+        
+        .feature-description {
+            color: #374151;
+            line-height: 1.6;
+        }
+        
+        .demo-button {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .demo-button:active {
+            transform: translateY(0);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card-title {
+            font-weight: bold;
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+        
+        .feature-card-description {
+            color: #6B7280;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .tech-stack {
+            background: #F3F4F6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .tech-stack-title {
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 15px;
+        }
+        
+        .tech-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .tech-badge {
+            background: white;
+            color: #374151;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid #D1D5DB;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10B981;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">📞 One Click Logs</h1>
+            <p class="demo-subtitle">
+                <span class="status-indicator pulse"></span>
+                Instant access to live call monitoring for supervisors
+            </p>
+        </div>
+        
+        <div class="feature-highlight">
+            <div class="feature-title">🎯 Key Feature Implemented</div>
+            <div class="feature-description">
+                <strong>"As a supervisor, I want easy access to the call logs, so I can easily find live calls I monitored."</strong>
+                <br><br>
+                The One-Click Logs feature provides supervisors with instant access to all their monitored calls, 
+                with special emphasis on live calls that are currently in progress.
+            </div>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔴</div>
+                <div class="feature-card-title">One-Click Live Access</div>
+                <div class="feature-card-description">
+                    Single button to instantly view all live calls being monitored by the supervisor
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-card-title">Real-time Dashboard</div>
+                <div class="feature-card-description">
+                    Live statistics showing call counts, durations, and monitoring status with auto-refresh
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-card-title">Smart Filtering</div>
+                <div class="feature-card-description">
+                    Filter calls by status (live, ended), department, priority, and time periods
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <div class="feature-card-title">Call Management</div>
+                <div class="feature-card-description">
+                    Add notes, tags, and manage call outcomes directly from the interface
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <div class="feature-card-title">Performance Metrics</div>
+                <div class="feature-card-description">
+                    Track call quality, duration, and monitoring effectiveness
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎧</div>
+                <div class="feature-card-title">Recording Integration</div>
+                <div class="feature-card-description">
+                    Access call recordings and metadata for quality assurance
+                </div>
+            </div>
+        </div>
+        
+        <div class="tech-stack">
+            <div class="tech-stack-title">🛠️ Technology Stack</div>
+            <div class="tech-badges">
+                <span class="tech-badge">React + TypeScript</span>
+                <span class="tech-badge">Go Backend</span>
+                <span class="tech-badge">AWS Lambda</span>
+                <span class="tech-badge">DynamoDB</span>
+                <span class="tech-badge">S3</span>
+                <span class="tech-badge">OpenAPI 3.0</span>
+                <span class="tech-badge">RESTful API</span>
+            </div>
+        </div>
+        
+        <div style="margin: 30px 0;">
+            <button class="demo-button" onclick="showImplementationDetails()">
+                🚀 View Implementation Details
+            </button>
+            <button class="demo-button" onclick="showAPIDocumentation()">
+                📚 API Documentation
+            </button>
+        </div>
+        
+        <div id="implementation-details" style="display: none; text-align: left; margin-top: 30px; padding: 20px; background: #F9FAFB; border-radius: 10px;">
+            <h3 style="color: #374151; margin-bottom: 15px;">📋 Implementation Summary</h3>
+            <ul style="color: #6B7280; line-height: 1.8;">
+                <li><strong>CallLog Model:</strong> Comprehensive data structure for call information</li>
+                <li><strong>CallLogService:</strong> Business logic for managing call logs and supervisor access</li>
+                <li><strong>CallLogDashboard:</strong> Main UI component with one-click live call access</li>
+                <li><strong>CallLogViewer:</strong> Detailed call view with editing capabilities</li>
+                <li><strong>API Endpoints:</strong> RESTful API for call log management and supervisor features</li>
+                <li><strong>Real-time Updates:</strong> Auto-refresh for live call monitoring</li>
+                <li><strong>Sample Data:</strong> Pre-populated with realistic call scenarios</li>
+            </ul>
+        </div>
+        
+        <div id="api-documentation" style="display: none; text-align: left; margin-top: 30px; padding: 20px; background: #F0F9FF; border-radius: 10px;">
+            <h3 style="color: #1E40AF; margin-bottom: 15px;">🔗 Key API Endpoints</h3>
+            <div style="font-family: monospace; font-size: 0.9rem; color: #374151;">
+                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                    <strong style="color: #10B981;">GET</strong> /call-logs/supervisor/{supervisorId}/live
+                    <br><span style="color: #6B7280;">One-click access to live monitored calls</span>
+                </div>
+                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                    <strong style="color: #3B82F6;">GET</strong> /call-logs/supervisor/{supervisorId}/stats
+                    <br><span style="color: #6B7280;">Supervisor performance statistics</span>
+                </div>
+                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                    <strong style="color: #3B82F6;">GET</strong> /call-logs?supervisorId={id}&status=live
+                    <br><span style="color: #6B7280;">Filtered call logs with pagination</span>
+                </div>
+                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                    <strong style="color: #F59E0B;">PATCH</strong> /call-logs/{callId}
+                    <br><span style="color: #6B7280;">Update call notes, tags, and status</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB; color: #6B7280; font-size: 0.9rem;">
+            ✅ <strong>Feature Complete:</strong> One Click Logs functionality has been successfully implemented with a comprehensive 
+            call monitoring system that allows supervisors to instantly access and manage their monitored calls.
+        </div>
+    </div>
+    
+    <script>
+        function showImplementationDetails() {
+            const details = document.getElementById('implementation-details');
+            const api = document.getElementById('api-documentation');
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                api.style.display = 'none';
+            } else {
+                details.style.display = 'none';
+            }
+        }
+        
+        function showAPIDocumentation() {
+            const details = document.getElementById('implementation-details');
+            const api = document.getElementById('api-documentation');
+            
+            if (api.style.display === 'none') {
+                api.style.display = 'block';
+                details.style.display = 'none';
+            } else {
+                api.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
