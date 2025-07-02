@@ -3,6 +3,7 @@ package opendevopslambda
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
@@ -97,36 +98,216 @@ func isValidExtension(urlVal string) bool {
 }
 
 func (d *Dependency) Handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Set CORS headers
+	headers := map[string]string{
+		"Access-Control-Allow-Origin":  "*",
+		"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+		"Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+		"Content-Type":                 "application/json",
+	}
+
+	// Handle CORS preflight requests
+	if request.HTTPMethod == "OPTIONS" {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Headers:    headers,
+			Body:       "",
+		}, nil
+	}
+
+	// Route based on path and method
+	switch {
+	case request.Path == "/users" && request.HTTPMethod == "POST":
+		return d.handleUserRegistration(request, headers)
+	case strings.HasPrefix(request.Path, "/users/") && request.HTTPMethod == "GET":
+		return d.handleGetUser(request, headers)
+	case request.Path == "/submit-image" || request.Path == "/" || request.Path == "":
+		return d.handleImageSubmission(ctx, request, headers)
+	default:
+		return events.APIGatewayProxyResponse{
+			StatusCode: 404,
+			Headers:    headers,
+			Body:       `{"error":"endpoint not found"}`,
+		}, nil
+	}
+}
+
+// handleUserRegistration handles POST /users for user registration
+func (d *Dependency) handleUserRegistration(request events.APIGatewayProxyRequest, headers map[string]string) (events.APIGatewayProxyResponse, error) {
+	userService := NewUserService(d.DepDynamoDB)
+	
+	var registrationReq UserRegistrationRequest
+	if err := json.Unmarshal([]byte(request.Body), &registrationReq); err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Headers:    headers,
+			Body:       `{"error":"invalid JSON format"}`,
+		}, nil
+	}
+
+	user, err := userService.CreateUser(registrationReq)
+	if err != nil {
+		statusCode := 400
+		if strings.Contains(err.Error(), "already exists") {
+			statusCode = 409
+		}
+		
+		errorResponse := map[string]string{"error": err.Error()}
+		errorJSON, _ := json.Marshal(errorResponse)
+		
+		return events.APIGatewayProxyResponse{
+			StatusCode: statusCode,
+			Headers:    headers,
+			Body:       string(errorJSON),
+		}, nil
+	}
+
+	response := UserRegistrationResponse{
+		User:    *user,
+		Message: "User registered successfully",
+	}
+	
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Headers:    headers,
+			Body:       `{"error":"internal server error"}`,
+		}, nil
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: 201,
+		Headers:    headers,
+		Body:       string(responseJSON),
+	}, nil
+}
+
+// handleGetUser handles GET /users/{id} or /users?email={email}
+func (d *Dependency) handleGetUser(request events.APIGatewayProxyRequest, headers map[string]string) (events.APIGatewayProxyResponse, error) {
+	userService := NewUserService(d.DepDynamoDB)
+	
+	// Extract user ID from path
+	pathParts := strings.Split(strings.Trim(request.Path, "/"), "/")
+	if len(pathParts) < 2 {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Headers:    headers,
+			Body:       `{"error":"user ID is required"}`,
+		}, nil
+	}
+	
+	userID := pathParts[1]
+	
+	// Check if it's an email query instead
+	if email, found := request.QueryStringParameters["email"]; found {
+		user, err := userService.GetUserByEmail(email)
+		if err != nil {
+			statusCode := 404
+			if strings.Contains(err.Error(), "not found") {
+				statusCode = 404
+			} else {
+				statusCode = 500
+			}
+			
+			errorResponse := map[string]string{"error": err.Error()}
+			errorJSON, _ := json.Marshal(errorResponse)
+			
+			return events.APIGatewayProxyResponse{
+				StatusCode: statusCode,
+				Headers:    headers,
+				Body:       string(errorJSON),
+			}, nil
+		}
+		
+		userJSON, err := json.Marshal(user)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Headers:    headers,
+				Body:       `{"error":"internal server error"}`,
+			}, nil
+		}
+		
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Headers:    headers,
+			Body:       string(userJSON),
+		}, nil
+	}
+	
+	// Get user by ID
+	user, err := userService.GetUserByID(userID)
+	if err != nil {
+		statusCode := 404
+		if strings.Contains(err.Error(), "not found") {
+			statusCode = 404
+		} else {
+			statusCode = 500
+		}
+		
+		errorResponse := map[string]string{"error": err.Error()}
+		errorJSON, _ := json.Marshal(errorResponse)
+		
+		return events.APIGatewayProxyResponse{
+			StatusCode: statusCode,
+			Headers:    headers,
+			Body:       string(errorJSON),
+		}, nil
+	}
+	
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Headers:    headers,
+			Body:       `{"error":"internal server error"}`,
+		}, nil
+	}
+	
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Headers:    headers,
+		Body:       string(userJSON),
+	}, nil
+}
+
+// handleImageSubmission handles the original image submission functionality
+func (d *Dependency) handleImageSubmission(ctx context.Context, request events.APIGatewayProxyRequest, headers map[string]string) (events.APIGatewayProxyResponse, error) {
 	lc, _ := lambdacontext.FromContext(ctx)
 	region := strings.Split(lc.InvokedFunctionArn, ":")[3]
-  aws_account_id := strings.Split(lc.InvokedFunctionArn, ":")[4]
+	aws_account_id := strings.Split(lc.InvokedFunctionArn, ":")[4]
 
 	urlParam, found := request.QueryStringParameters["url"]
 	if found {
 		urlVal, err := url.QueryUnescape(urlParam)
 		if err != nil {
-			return events.APIGatewayProxyResponse{StatusCode: 500,
-				Body: `{"ImageId":"error"}`,
-				IsBase64Encoded: false,
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Headers:    headers,
+				Body:       `{"ImageId":"error"}`,
 			}, err
 		}
 
 		if !isValidExtension(urlVal) {
-			return events.APIGatewayProxyResponse{StatusCode: 500,
-				Body: `{"ImageId":"error"}`,
-				IsBase64Encoded: false,
-			}, errors.New("file extension %s is not valid")
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Headers:    headers,
+				Body:       `{"ImageId":"error"}`,
+			}, errors.New("file extension is not valid")
 		}
 
 		processString, processErr := d.processRequest(urlVal, region, aws_account_id)
-		return events.APIGatewayProxyResponse{StatusCode: 200,
-			Body: fmt.Sprintf(`"ImageId":"%s"`, processString),
-			IsBase64Encoded: false,
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Headers:    headers,
+			Body:       fmt.Sprintf(`{"ImageId":"%s"}`, processString),
 		}, processErr
 	}
 
-	return events.APIGatewayProxyResponse{StatusCode: 500,
-		Body: `{"ImageId":"error"}`,
-		IsBase64Encoded: false,
+	return events.APIGatewayProxyResponse{
+		StatusCode: 500,
+		Headers:    headers,
+		Body:       `{"ImageId":"error"}`,
 	}, errors.New("url parameter not found")
 }

@@ -1,125 +1,260 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
+  title: User Registration and Image Submission API
+  description: API for user registration and image submission functionality
   license:
     name: MIT
 servers:
-  - url: http://petstore.swagger.io/v1
+  - url: https://api.example.com/v1
 paths:
-  /pets:
-    get:
-      summary: List all pets
-      operationId: listPets
-      tags:
-        - pets
-      parameters:
-        - name: limit
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
-            maximum: 100
-            format: int32
-      responses:
-        '200':
-          description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
-          content:
-            application/json:    
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+  /users:
     post:
-      summary: Create a pet
-      operationId: createPets
+      summary: Register a new user
+      operationId: registerUser
       tags:
-        - pets
+        - users
       requestBody:
+        description: User registration data
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pet'
-        required: true
+              $ref: '#/components/schemas/UserRegistrationRequest'
       responses:
         '201':
-          description: Null response
-        default:
-          description: unexpected error
+          description: User successfully registered
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-  /pets/{petId}:
+                $ref: '#/components/schemas/UserRegistrationResponse'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     get:
-      summary: Info for a specific pet
-      operationId: showPetById
+      summary: Get user by email
+      operationId: getUserByEmail
       tags:
-        - pets
+        - users
       parameters:
-        - name: petId
-          in: path
+        - name: email
+          in: query
           required: true
-          description: The id of the pet to retrieve
+          description: Email address of the user to retrieve
           schema:
             type: string
-        - name: petAlias
+            format: email
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{userId}:
+    get:
+      summary: Get user by ID
+      operationId: getUserById
+      tags:
+        - users
+      parameters:
+        - name: userId
           in: path
-          required: false
-          description: The alias of the pet to retrieve
+          required: true
+          description: The ID of the user to retrieve
           schema:
             type: string
       responses:
         '200':
-          description: Expected response to a valid request
+          description: User found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         default:
-          description: unexpected error
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
+  /submit-image:
+    get:
+      summary: Submit an image for processing
+      operationId: submitImage
+      tags:
+        - images
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: URL of the image to process
+          schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: Image successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageSubmissionResponse'
+        '400':
+          description: Invalid image URL or format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Pet:
+    User:
       type: object
       required:
         - id
-        - name
+        - email
+        - username
+        - firstName
+        - lastName
+        - createdAt
+        - updatedAt
+        - isActive
       properties:
         id:
-          type: integer
-          format: int64
-        name:
           type: string
-        tag:
+          description: Unique identifier for the user
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
           type: string
-    Pets:
-      type: array
-      maxItems: 100
-      items:
-        $ref: "#/components/schemas/Pet"
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        username:
+          type: string
+          description: User's unique username
+          example: "johndoe"
+          minLength: 3
+          maxLength: 30
+        firstName:
+          type: string
+          description: User's first name
+          example: "John"
+        lastName:
+          type: string
+          description: User's last name
+          example: "Doe"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was created
+          example: "2023-01-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was last updated
+          example: "2023-01-01T12:00:00Z"
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+    
+    UserRegistrationRequest:
+      type: object
+      required:
+        - email
+        - username
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        username:
+          type: string
+          description: Desired username (3-30 characters, alphanumeric, underscore, hyphen only)
+          example: "johndoe"
+          minLength: 3
+          maxLength: 30
+          pattern: "^[a-zA-Z0-9_-]+$"
+        firstName:
+          type: string
+          description: User's first name
+          example: "John"
+          minLength: 1
+        lastName:
+          type: string
+          description: User's last name
+          example: "Doe"
+          minLength: 1
+    
+    UserRegistrationResponse:
+      type: object
+      required:
+        - user
+        - message
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+          description: Success message
+          example: "User registered successfully"
+    
+    ImageSubmissionResponse:
+      type: object
+      required:
+        - ImageId
+      properties:
+        ImageId:
+          type: string
+          description: Unique identifier for the submitted image
+          example: "550e8400-e29b-41d4-a716-446655440000"
+    
     Error:
       type: object
       required:
-        - code
-        - message
+        - error
       properties:
-        code:
-          type: integer
-          format: int32
-        message:
+        error:
           type: string
+          description: Error message describing what went wrong
+          example: "Invalid email format"
