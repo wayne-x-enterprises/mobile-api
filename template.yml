@@ -16,7 +16,7 @@ Resources:
       Runtime: provided.al2
       Tracing: Active
       Policies:
-        - AmazonDynamoDBFullAccess
+        - AmazonDynamoDBFullAccess XYZ
         - AmazonS3FullAccess
         - AdministratorAccess
       Events:
