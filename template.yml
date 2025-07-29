@@ -6,6 +6,153 @@ Globals:
     Timeout: 5
 
 Resources:
+  # DynamoDB Tables for Authentication
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Name
+          Value: Users
+        - Key: business_unit
+          Value: agile_devops_pmm
+        - Key: service_name
+          Value: open_devops_image_rec
+        - Key: resource_owner
+          Value: wmarusiak
+
+  TwoFactorAuthTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TwoFactorAuth
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Name
+          Value: TwoFactorAuth
+        - Key: business_unit
+          Value: agile_devops_pmm
+        - Key: service_name
+          Value: open_devops_image_rec
+        - Key: resource_owner
+          Value: wmarusiak
+
+  AuthenticationAttemptsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: AuthenticationAttempts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: attempted_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmailTimeIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+            - AttributeName: attempted_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Name
+          Value: AuthenticationAttempts
+        - Key: business_unit
+          Value: agile_devops_pmm
+        - Key: service_name
+          Value: open_devops_image_rec
+        - Key: resource_owner
+          Value: wmarusiak
+
+  UserSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Name
+          Value: UserSessions
+        - Key: business_unit
+          Value: agile_devops_pmm
+        - Key: service_name
+          Value: open_devops_image_rec
+        - Key: resource_owner
+          Value: wmarusiak
+
   SubmitImageFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -15,12 +162,61 @@ Resources:
       Handler: bootstrap
       Runtime: provided.al2
       Tracing: Active
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+          TWO_FACTOR_AUTH_TABLE: !Ref TwoFactorAuthTable
+          AUTH_ATTEMPTS_TABLE: !Ref AuthenticationAttemptsTable
+          USER_SESSIONS_TABLE: !Ref UserSessionsTable
       Policies:
         - AmazonDynamoDBFullAccess
         - AmazonS3FullAccess
-        - AdministratorAccess
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt UsersTable.Arn
+                - !GetAtt TwoFactorAuthTable.Arn
+                - !GetAtt AuthenticationAttemptsTable.Arn
+                - !GetAtt UserSessionsTable.Arn
+                - !Sub "${UsersTable.Arn}/index/*"
+                - !Sub "${TwoFactorAuthTable.Arn}/index/*"
+                - !Sub "${AuthenticationAttemptsTable.Arn}/index/*"
+                - !Sub "${UserSessionsTable.Arn}/index/*"
       Events:
         CatchAll:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        AuthLogin:
+          Type: Api
+          Properties:
+            Path: /auth/login
+            Method: POST
+        Auth2FASetup:
+          Type: Api
+          Properties:
+            Path: /auth/2fa/setup
+            Method: POST
+        Auth2FAVerify:
+          Type: Api
+          Properties:
+            Path: /auth/2fa/verify
+            Method: POST
+        AuthLogout:
+          Type: Api
+          Properties:
+            Path: /auth/logout
+            Method: POST
+        Bootstrap:
           Type: Api
           Properties:
             Path: /bootstrap
