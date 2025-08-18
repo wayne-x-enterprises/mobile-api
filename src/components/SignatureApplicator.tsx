@@ -107,6 +107,9 @@ export const SignatureApplicator: React.FC<SignatureApplicatorProps> = ({
     <div className="signature-applicator">
       <div className="signature-tools">
         <button onClick={handleCreateSignature}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
           Create New Signature
         </button>
         
@@ -168,43 +171,82 @@ export const SignatureApplicator: React.FC<SignatureApplicatorProps> = ({
         .signature-applicator {
           display: flex;
           flex-direction: column;
-          gap: 20px;
-          padding: 20px;
+          gap: 2rem;
+          padding: 0;
         }
 
         .signature-tools {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 1.5rem;
         }
 
         .signature-list {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1rem;
         }
 
         .signature-item {
-          border: 1px solid #ddd;
-          padding: 10px;
+          border: 2px solid #e5e7eb;
+          border-radius: 0.75rem;
+          padding: 1rem;
           cursor: pointer;
-          transition: border-color 0.2s;
+          transition: all 0.2s ease;
+          background: white;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .signature-item:hover {
+          border-color: #6366f1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
         }
 
         .signature-item.selected {
-          border-color: #007bff;
+          border-color: #6366f1;
+          background: #f0f9ff;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .signature-item img {
+          border-radius: 0.5rem;
+          border: 1px solid #e5e7eb;
+          background: white;
+        }
+
+        .signature-item span {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+          text-align: center;
         }
 
         .signature-canvas-container {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 1rem;
           align-items: center;
+          background: #f9fafb;
+          padding: 2rem;
+          border-radius: 0.75rem;
+          border: 2px dashed #d1d5db;
         }
 
         .canvas-controls {
           display: flex;
-          gap: 10px;
+          gap: 0.75rem;
+        }
+
+        .document-preview {
+          background: white;
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
         }
 
         .document-instructions {
@@ -212,21 +254,73 @@ export const SignatureApplicator: React.FC<SignatureApplicatorProps> = ({
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          color: #666;
+          color: #9ca3af;
           pointer-events: none;
+          text-align: center;
+          font-weight: 500;
+          background: rgba(255, 255, 255, 0.9);
+          padding: 1rem 2rem;
+          border-radius: 0.5rem;
+          border: 2px dashed #d1d5db;
         }
 
         button {
-          padding: 8px 16px;
-          background-color: #007bff;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: #6366f1;
           color: white;
           border: none;
-          border-radius: 4px;
+          border-radius: 0.5rem;
+          font-weight: 500;
+          font-size: 0.875rem;
           cursor: pointer;
+          transition: all 0.2s ease;
         }
 
         button:hover {
-          background-color: #0056b3;
+          background: #5b21b6;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        button:active {
+          transform: translateY(0);
+        }
+
+        /* Empty state */
+        .signature-list:empty::after {
+          content: "No signatures yet. Create your first signature above.";
+          grid-column: 1 / -1;
+          text-align: center;
+          color: #9ca3af;
+          font-style: italic;
+          padding: 2rem;
+          border: 2px dashed #d1d5db;
+          border-radius: 0.75rem;
+          background: #f9fafb;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+          .signature-list {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          }
+
+          .canvas-controls {
+            flex-direction: column;
+            width: 100%;
+          }
+
+          button {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .signature-canvas-container {
+            padding: 1rem;
+          }
         }
       `}</style>
     </div>
